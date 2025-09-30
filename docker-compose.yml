@@ -1,0 +1,88 @@
+services:
+  postgres:
+    image: postgres:17
+    container_name: servicedesk-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: servicedesk_pro_db
+      POSTGRES_USER: servicedesk_user
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - servicedesk-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U servicedesk_user -d servicedesk_pro_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: .
+      dockerfile: apps/backend/Dockerfile
+    container_name: servicedesk-backend
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      DATABASE_URL: postgresql://servicedesk_user:password@postgres:5433/servicedesk_pro_db
+      JWT_SECRET: xPfFSOIysG3ZiDFUNTZd_MtNicatEV5P-JTXkSjOyJ4
+      CORS_ORIGIN: http://localhost:3000
+    ports:
+      - "3001:3001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - servicedesk-network
+    command: >
+      sh -c "
+        npx prisma db push --accept-data-loss &&
+        npx prisma db seed &&
+        node dist/main.js
+      "
+
+  frontend:
+    build:
+      context: .
+      dockerfile: apps/frontend/Dockerfile
+    container_name: servicedesk-frontend
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_API_URL: http://localhost:3001
+      NEXTAUTH_URL: http://localhost:3000
+      NEXTAUTH_SECRET: xPfFSOIysG3ZiDFUNTZd_MtNicatEV5P-JTXkSjOyJ4
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    networks:
+      - servicedesk-network
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: servicedesk-pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@servicedesk.com
+      PGADMIN_DEFAULT_PASSWORD: admin123
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+    networks:
+      - servicedesk-network
+    profiles:
+      - tools
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  servicedesk-network:
+    driver: bridge

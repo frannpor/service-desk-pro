@@ -1,0 +1,33 @@
+{
+  "name": "servicedesk-pro",
+  "version": "0.1.0",
+  "description": "ServiceDesk Pro - Plataforma de gestión de tickets",
+  "private": true,
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:frontend": "npm run dev --workspace=apps/frontend",
+    "dev:backend": "npm run start:dev --workspace=apps/backend",
+    "build": "npm run build --workspace=apps/backend && npm run build --workspace=apps/frontend",
+    "build:frontend": "npm run build --workspace=apps/frontend",
+    "build:backend": "npm run build --workspace=apps/backend",
+    "start": "concurrently \"npm run start:prod --workspace=apps/backend\" \"npm run start --workspace=apps/frontend\"",
+    "start:frontend": "npm run start --workspace=apps/frontend",
+    "start:backend": "npm run start:prod --workspace=apps/backend",
+    "lint": "npm run lint --workspace=apps/frontend && npm run lint --workspace=apps/backend",
+    "db:generate": "npm run db:generate --workspace=apps/backend",
+    "db:push": "npm run db:push --workspace=apps/backend",
+    "db:seed": "npm run db:seed --workspace=apps/backend",
+    "install:all": "npm install"
+  },
+  "devDependencies": {
+    "concurrently": "8.2.2",
+    "dotenv-cli": "10.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  }
+}
