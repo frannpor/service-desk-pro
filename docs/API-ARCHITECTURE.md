@@ -16,7 +16,7 @@ The frontend API architecture follows a layered approach with clear separation o
 
 Defines all API endpoints and configuration in a centralized location:
 
-\`\`\`typescript
+```typescript
 export const API_ENDPOINTS = {
   AUTH: { LOGIN: "/auth/login", ... },
   TICKETS: { LIST: "/tickets", ... },
@@ -29,7 +29,7 @@ export const API_CONFIG = {
   TIMEOUT: 30000,
   RETRIES: 3,
 }
-\`\`\`
+```
 
 ### 2. Utils Layer
 
@@ -44,7 +44,7 @@ Provides low-level HTTP utilities:
 
 Organized by domain (Auth, Ticket, Category, Dashboard, User):
 
-\`\`\`typescript
+```typescript
 export const TicketService = {
   async getTickets(query: TicketQueryDto): Promise<TicketListResponse> { ... },
   async getTicketById(id: string): Promise<TicketDetail> { ... },
@@ -52,13 +52,13 @@ export const TicketService = {
   async updateTicket(id: string, data: UpdateTicketDto): Promise<TicketDetail> { ... },
   async addComment(ticketId: string, data: CreateCommentDto): Promise<Comment> { ... },
 }
-\`\`\`
+```
 
 ### 4. Hooks Layer
 
 React Query hooks for each service with proper cache management:
 
-\`\`\`typescript
+```typescript
 // Query hooks
 export function useTickets(query: TicketQueryDto) { ... }
 export function useTicket(id: string) { ... }
@@ -67,10 +67,10 @@ export function useTicket(id: string) { ... }
 export function useCreateTicket() { ... }
 export function useUpdateTicket() { ... }
 export function useAddComment() { ... }
-\`\`\`
+```
 
 **Query Keys Pattern:**
-\`\`\`typescript
+```typescript
 export const ticketKeys = {
   all: ["tickets"] as const,
   lists: () => [...ticketKeys.all, "list"] as const,
@@ -78,7 +78,7 @@ export const ticketKeys = {
   details: () => [...ticketKeys.all, "detail"] as const,
   detail: (id: string) => [...ticketKeys.details(), id] as const,
 }
-\`\`\`
+```
 
 ### 5. Types Layer
 
@@ -101,7 +101,7 @@ TypeScript definitions matching backend DTOs:
 
 All API errors are wrapped in `ApiError` class:
 
-\`\`\`typescript
+```typescript
 try {
   await TicketService.createTicket(data)
 } catch (error) {
@@ -109,7 +109,7 @@ try {
     console.error(`API Error ${error.status}: ${error.message}`)
   }
 }
-\`\`\`
+```
 
 React Query hooks handle errors automatically:
 - Retry logic for transient failures
@@ -130,17 +130,17 @@ React Query provides intelligent caching:
   - Allows instant back navigation
 
 - **Invalidation**: Mutations automatically invalidate related queries
-  \`\`\`typescript
+  ```typescript
   onSuccess: () => {
     queryClient.invalidateQueries({ queryKey: ticketKeys.lists() })
   }
-  \`\`\`
+  ```
 
 ## Usage Examples
 
 ### Fetching Data
 
-\`\`\`typescript
+```typescript
 function TicketList() {
   const { data, isLoading, error } = useTickets({ 
     status: [TicketStatus.OPEN],
@@ -153,11 +153,11 @@ function TicketList() {
   
   return <TicketTable tickets={data.tickets} />
 }
-\`\`\`
+```
 
 ### Creating Data
 
-\`\`\`typescript
+```typescript
 function CreateTicketForm() {
   const createTicket = useCreateTicket()
 
@@ -172,11 +172,11 @@ function CreateTicketForm() {
 
   return <form onSubmit={handleSubmit}>...</form>
 }
-\`\`\`
+```
 
 ### Updating Data
 
-\`\`\`typescript
+```typescript
 function TicketDetail({ id }: { id: string }) {
   const { data: ticket } = useTicket(id)
   const updateTicket = useUpdateTicket()
@@ -190,7 +190,7 @@ function TicketDetail({ id }: { id: string }) {
 
   return <TicketView ticket={ticket} onStatusChange={handleStatusChange} />
 }
-\`\`\`
+```
 
 ## Role-Based Access
 
@@ -213,7 +213,7 @@ The backend enforces role-based permissions. Frontend hooks handle errors gracef
 
 Required in `.env.local`:
 
-\`\`\`bash
+```bash
 NEXT_PUBLIC_API_URL=http://localhost:3001
 NEXTAUTH_SECRET=your-secret-key
 NEXTAUTH_URL=http://localhost:3000

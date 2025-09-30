@@ -14,7 +14,7 @@ Manage the complete lifecycle of tickets with role-based permissions and compreh
 
 ### State Machine
 
-\`\`\`mermaid
+```mermaid
 stateDiagram-v2
     [*]  OPEN
     OPEN  IN_PROGRESS : Agent takes ticket
@@ -33,7 +33,7 @@ stateDiagram-v2
     RESOLVED  IN_PROGRESS : Requester reopens
     
     CLOSED  IN_PROGRESS : Manager reopens
-\`\`\`
+```
 
 ### Permission Matrix
 
@@ -54,7 +54,7 @@ stateDiagram-v2
 ### API Contracts
 
 #### GET /api/tickets
-\`\`\`typescript
+```typescript
 Query: {
   status?: TicketStatus[];
   assignedTo?: string;
@@ -73,10 +73,10 @@ Response: {
     totalPages: number;
   };
 }
-\`\`\`
+```
 
 #### PATCH /api/tickets/:id
-\`\`\`typescript
+```typescript
 Request: {
   status?: TicketStatus;
   agentId?: string;
@@ -87,10 +87,10 @@ Response: {
   ticket: Ticket;
   auditLog: AuditLog;
 }
-\`\`\`
+```
 
 #### POST /api/tickets/:id/comments
-\`\`\`typescript
+```typescript
 Request: {
   content: string;
   isInternal: boolean;
@@ -99,7 +99,7 @@ Request: {
 Response: {
   comment: Comment;
 }
-\`\`\`
+```
 
 ### Audit System
 
@@ -112,7 +112,7 @@ Response: {
 - Custom field updates
 
 #### Audit Log Entry
-\`\`\`typescript
+```typescript
 interface AuditLog {
   id: string;
   ticketId: string;
@@ -123,7 +123,7 @@ interface AuditLog {
   newValue?: any;
   createdAt: Date;
 }
-\`\`\`
+```
 
 ### Concurrency Handling
 
@@ -133,12 +133,12 @@ interface AuditLog {
 - Show conflict resolution UI
 
 #### Implementation
-\`\`\`typescript
+```typescript
 // Backend validation
 if (ticket.updatedAt !== requestData.lastUpdatedAt) {
   throw new ConflictException('Ticket was modified by another user');
 }
-\`\`\`
+```
 
 ## Implementation Plan
 

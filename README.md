@@ -1,171 +1,627 @@
 # ServiceDesk Pro MVP
 
-A modern internal service desk platform for managing support tickets with role-based access, SLA tracking, and comprehensive audit trails.
+Una plataforma moderna de service desk interno para gestionar tickets de soporte con control de acceso basado en roles, seguimiento de SLA y auditoría completa.
 
-## 🏗️ Architecture
+## 🏗️ Arquitectura
 
-This is a **Turborepo** monorepo containing:
+Este es un monorepo **Turborepo** que contiene:
 
 - **Frontend**: Next.js 15 + TypeScript + Tailwind CSS + Radix UI
 - **Backend**: NestJS + Prisma + PostgreSQL
-- **Shared**: TypeScript types and utilities
+- **Shared**: Tipos TypeScript y utilidades compartidas
 
-## 🚀 Quick Start
+### Arquitectura de Deployment (Futura)
 
-### Prerequisites
-- Node.js 18+
-- PostgreSQL 14+
-- npm or yarn
+El proyecto está diseñado para un deployment híbrido:
 
-### Installation
+- **Frontend**: Vercel (Next.js optimizado)
+- **Backend**: AWS (ECS, Lambda, o EC2)
+- **Base de Datos**: Supabase (PostgreSQL gestionado)
+- **Assets**: Vercel Blob o S3
 
-1. **Clone and install dependencies**
-\`\`\`bash
+## 🚀 Guía de Inicio Rápido
+
+### Prerequisitos
+
+Antes de comenzar, asegúrate de tener instalado:
+
+- **Node.js** 18+ ([Descargar](https://nodejs.org/))
+- **npm** 10+ (viene con Node.js)
+- **PostgreSQL** 14+ ([Descargar](https://www.postgresql.org/download/))
+  - O usa Docker para PostgreSQL (ver sección Docker más abajo)
+- **Git** ([Descargar](https://git-scm.com/))
+
+### Opción 1: Instalación Local (Desarrollo)
+
+#### 1. Clonar el Repositorio
+
+```bash
 git clone <repository-url>
 cd servicedesk-pro
-npm install
-\`\`\`
+```
 
-2. **Set up environment variables**
-\`\`\`bash
-# Copy environment files
-cp apps/frontend/.env.example apps/frontend/.env.local
+#### 2. Instalar Dependencias
+
+```bash
+# Instalar todas las dependencias del monorepo
+npm install
+```
+
+Este comando instalará las dependencias para:
+- El workspace raíz
+- Frontend (`apps/frontend`)
+- Backend (`apps/backend`)
+
+#### 3. Configurar Variables de Entorno
+
+**Backend** (`apps/backend/.env`):
+
+```bash
+# Copiar el archivo de ejemplo
 cp apps/backend/.env.example apps/backend/.env
 
-# Update DATABASE_URL and other variables in both files
-\`\`\`
+# Editar el archivo con tus valores
+nano apps/backend/.env  # o usa tu editor favorito
+```
 
-3. **Set up database**
-\`\`\`bash
-# Generate Prisma client
+Variables requeridas:
+```env
+DATABASE_URL="postgresql://postgres:password@localhost:5432/servicedesk_pro"
+JWT_SECRET="xPfFSOIysG3ZiDFUNTZd_MtNicatEV5P-JTXkSjOyJ4"
+JWT_EXPIRES_IN="7d"
+FRONTEND_URL="http://localhost:3000"
+PORT=3001
+NODE_ENV="development"
+```
+
+**Frontend** (`apps/frontend/.env.local`):
+
+```bash
+# Copiar el archivo de ejemplo
+cp apps/frontend/.env.example apps/frontend/.env.local
+
+# Editar el archivo con tus valores
+nano apps/frontend/.env.local
+```
+
+Variables requeridas:
+```env
+DATABASE_URL="postgresql://postgres:password@localhost:5432/servicedesk_pro"
+NEXTAUTH_SECRET="xPfFSOIysG3ZiDFUNTZd_MtNicatEV5P-JTXkSjOyJ4"
+NEXTAUTH_URL="http://localhost:3000"
+NEXT_PUBLIC_API_URL="http://localhost:3001"
+NODE_ENV=development
+```
+
+#### 4. Configurar la Base de Datos
+
+**Opción A: PostgreSQL Local**
+
+```bash
+# Crear la base de datos
+createdb servicedesk_pro
+
+# O usando psql
+psql -U postgres
+CREATE DATABASE servicedesk_pro;
+q
+```
+
+**Opción B: PostgreSQL con Docker**
+
+```bash
+# Iniciar PostgreSQL en Docker
+docker run --name servicedesk-postgres 
+  -e POSTGRES_PASSWORD=password 
+  -e POSTGRES_DB=servicedesk_pro 
+  -p 5432:5432 
+  -d postgres:14
+```
+
+#### 5. Inicializar el Schema de la Base de Datos
+
+```bash
+# Generar el cliente de Prisma
 npm run db:generate
 
-# Push schema to database
+# Aplicar el schema a la base de datos
 npm run db:push
 
-# Seed with sample data
+# Poblar con datos de ejemplo (usuarios, categorías, tickets)
 npm run db:seed
-\`\`\`
+```
 
-4. **Start development servers**
-\`\`\`bash
-# Start both frontend and backend
+#### 6. Iniciar los Servidores de Desarrollo
+
+**Opción A: Iniciar todo junto**
+
+```bash
 npm run dev
+```
 
-# Or start individually
-cd apps/frontend && npm run dev  # http://localhost:3000
-cd apps/backend && npm run start:dev  # http://localhost:3001
-\`\`\`
+Esto iniciará:
+- Frontend en `http://localhost:3000`
+- Backend en `http://localhost:3001`
 
-## 👥 User Roles & Access
+**Opción B: Iniciar servicios individualmente**
 
-### Test Accounts
-- **Manager**: admin@company.com / password123
-- **Agent**: agent1@company.com / password123  
-- **Requester**: user1@company.com / password123
+Terminal 1 (Backend):
+```bash
+cd apps/backend
+npm run start:dev
+```
 
-### Role Permissions
-- **Requester**: Create tickets, view own tickets, add comments
-- **Agent**: Manage assigned tickets, view all tickets, internal comments
-- **Manager**: Full access, configure categories, view analytics
+Terminal 2 (Frontend):
+```bash
+cd apps/frontend
+npm run dev
+```
 
-## 🎯 Core Features
+#### 7. Acceder a la Aplicación
 
-### ✅ F1 - Ticket Intake & Categories
-- Dynamic ticket creation forms based on categories
-- Custom fields configuration by managers
-- Automatic SLA assignment based on category
+Abre tu navegador en `http://localhost:3000`
 
-### ✅ F2 - Ticket Lifecycle & Audit
-- Complete ticket state management
-- Role-based permissions
-- Comprehensive audit trail
-- Concurrency handling
+### Opción 2: Instalación con Docker Compose (Recomendado)
 
-### ✅ F3 - SLA Monitoring & Dashboard
-- Real-time SLA tracking and alerts
-- Executive dashboard with key metrics
-- Performance analytics by agent/category
+Docker Compose facilita el setup al manejar PostgreSQL, Backend y Frontend en contenedores.
 
-## 🛠️ Technology Stack
+#### 1. Prerequisitos Docker
+
+- **Docker** ([Descargar](https://www.docker.com/get-started))
+- **Docker Compose** (incluido con Docker Desktop)
+
+#### 2. Crear docker-compose.yml
+
+Crea un archivo `docker-compose.yml` en la raíz del proyecto:
+
+```yaml
+services:
+  postgres:
+    image: postgres:17
+    container_name: servicedesk-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: servicedesk_pro_db
+      POSTGRES_USER: servicedesk_user
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - servicedesk-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U servicedesk_user -d servicedesk_pro_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: .
+      dockerfile: apps/backend/Dockerfile
+    container_name: servicedesk-backend
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      DATABASE_URL: postgresql://servicedesk_user:password@postgres:5433/servicedesk_pro_db
+      JWT_SECRET: xPfFSOIysG3ZiDFUNTZd_MtNicatEV5P-JTXkSjOyJ4
+      CORS_ORIGIN: http://localhost:3000
+    ports:
+      - "3001:3001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - servicedesk-network
+    command: >
+      sh -c "
+        npx prisma db push --accept-data-loss &&
+        npx prisma db seed &&
+        node dist/main.js
+      "
+
+  frontend:
+    build:
+      context: .
+      dockerfile: apps/frontend/Dockerfile
+    container_name: servicedesk-frontend
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_API_URL: http://localhost:3001
+      NEXTAUTH_URL: http://localhost:3000
+      NEXTAUTH_SECRET: xPfFSOIysG3ZiDFUNTZd_MtNicatEV5P-JTXkSjOyJ4
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    networks:
+      - servicedesk-network
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: servicedesk-pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@servicedesk.com
+      PGADMIN_DEFAULT_PASSWORD: admin123
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+    networks:
+      - servicedesk-network
+    profiles:
+      - tools
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  servicedesk-network:
+    driver: bridge
+```
+
+#### 3. Crear Dockerfiles
+
+**Backend Dockerfile** (`apps/backend/Dockerfile`):
+
+```dockerfile
+FROM node:18-alpine AS base
+
+WORKDIR /app
+
+# Copiar archivos de configuración
+COPY package*.json ./
+COPY turbo.json ./
+COPY apps/backend/package*.json ./apps/backend/
+
+# Instalar dependencias
+RUN npm install
+
+# Copiar código fuente
+COPY apps/backend ./apps/backend
+COPY prisma ./apps/backend/prisma
+
+# Generar Prisma Client
+RUN cd apps/backend && npx prisma generate
+
+# Exponer puerto
+EXPOSE 3001
+
+# Comando de inicio
+CMD ["npm", "run", "start:dev", "--workspace=backend"]
+```
+
+**Frontend Dockerfile** (`apps/frontend/Dockerfile`):
+
+```dockerfile
+FROM node:18-alpine AS base
+
+WORKDIR /app
+
+# Copiar archivos de configuración
+COPY package*.json ./
+COPY turbo.json ./
+COPY apps/frontend/package*.json ./apps/frontend/
+
+# Instalar dependencias
+RUN npm install
+
+# Copiar código fuente
+COPY apps/frontend ./apps/frontend
+
+# Exponer puerto
+EXPOSE 3000
+
+# Comando de inicio
+CMD ["npm", "run", "dev", "--workspace=frontend"]
+```
+
+#### 4. Iniciar con Docker Compose
+
+```bash
+# Construir e iniciar todos los servicios
+docker-compose up --build
+
+# O en modo detached (background)
+docker-compose up -d --build
+```
+
+#### 5. Inicializar la Base de Datos
+
+```bash
+# Ejecutar migraciones dentro del contenedor del backend
+docker-compose exec backend npm run db:push
+
+# Poblar con datos de ejemplo
+docker-compose exec backend npm run db:seed
+```
+
+#### 6. Acceder a los Servicios
+
+- **Frontend**: http://localhost:3000
+- **Backend API**: http://localhost:3001
+- **pgAdmin**: http://localhost:5050 (admin@admin.com / admin)
+
+#### 7. Comandos Útiles de Docker
+
+```bash
+# Ver logs de todos los servicios
+docker-compose logs -f
+
+# Ver logs de un servicio específico
+docker-compose logs -f backend
+
+# Detener todos los servicios
+docker-compose down
+
+# Detener y eliminar volúmenes (limpieza completa)
+docker-compose down -v
+
+# Reconstruir un servicio específico
+docker-compose up -d --build backend
+
+# Ejecutar comandos dentro de un contenedor
+docker-compose exec backend sh
+docker-compose exec frontend sh
+```
+
+## 👥 Usuarios de Prueba
+
+Después de ejecutar `npm run db:seed`, tendrás acceso a estas cuentas:
+
+| Rol | Email | Password | Permisos |
+|-----|-------|----------|----------|
+| **Manager** | admin@company.com | password123 | Acceso completo, configuración, analytics |
+| **Agent** | agent1@company.com | password123 | Gestionar tickets asignados, comentarios internos |
+| **Requester** | user1@company.com | password123 | Crear tickets, ver propios tickets, comentarios |
+
+### Permisos por Rol
+
+- **Requester**: Crear tickets, ver sus propios tickets, agregar comentarios
+- **Agent**: Gestionar tickets asignados, ver todos los tickets, comentarios internos
+- **Manager**: Acceso completo, configurar categorías, ver analytics y dashboard
+
+## 🎯 Funcionalidades Principales
+
+### ✅ F1 - Intake de Tickets y Categorías
+- Formularios dinámicos de creación de tickets basados en categorías
+- Configuración de campos personalizados por managers
+- Asignación automática de SLA según categoría
+
+### ✅ F2 - Ciclo de Vida de Tickets y Auditoría
+- Gestión completa del estado de tickets
+- Permisos basados en roles
+- Registro de auditoría completo
+- Manejo de concurrencia
+
+### ✅ F3 - Monitoreo de SLA y Dashboard
+- Seguimiento de SLA en tiempo real con alertas
+- Dashboard ejecutivo con métricas clave
+- Analytics de rendimiento por agente/categoría
+
+## 🛠️ Stack Tecnológico
 
 ### Frontend
-- **Framework**: Next.js 15 with App Router
+- **Framework**: Next.js 15 con App Router
 - **Styling**: Tailwind CSS + Radix UI components
 - **Forms**: React Hook Form + Zod validation
-- **State**: React Query for server state
+- **State**: React Query para estado del servidor
 - **Auth**: NextAuth.js v5
 
 ### Backend  
-- **Framework**: NestJS with TypeScript
+- **Framework**: NestJS con TypeScript
 - **Database**: PostgreSQL + Prisma ORM
-- **Auth**: JWT with Passport.js
+- **Auth**: JWT con Passport.js
 - **Validation**: Class Validator + Class Transformer
 
-## 📁 Project Structure
+## 📁 Estructura del Proyecto
 
-\`\`\`
+```
 servicedesk-pro/
 ├── apps/
-│   ├── frontend/          # Next.js application
-│   │   ├── app/           # App Router pages
-│   │   ├── components/    # Reusable UI components
-│   │   ├── lib/           # Utilities and configurations
-│   │   └── types/         # TypeScript type definitions
-│   └── backend/           # NestJS API
+│   ├── frontend/              # Aplicación Next.js
+│   │   ├── app/               # App Router pages
+│   │   │   ├── auth/          # Páginas de autenticación
+│   │   │   ├── dashboard/     # Dashboard principal
+│   │   │   └── tickets/       # Gestión de tickets
+│   │   ├── components/        # Componentes UI reutilizables
+│   │   │   ├── dashboard/     # Componentes del dashboard
+│   │   │   ├── tickets/       # Componentes de tickets
+│   │   │   ├── layout/        # Layout y navegación
+│   │   │   └── ui/            # Componentes base (shadcn/ui)
+│   │   ├── lib/               # Utilidades y configuraciones
+│   │   │   ├── hooks/         # Custom React hooks
+│   │   │   ├── services/      # Servicios API
+│   │   │   ├── schemas/       # Schemas de validación Zod
+│   │   │   └── types/         # Definiciones TypeScript
+│   │   └── middleware.ts      # Middleware de Next.js
+│   │
+│   └── backend/               # API NestJS
 │       ├── src/
-│       │   ├── modules/   # Feature modules
-│       │   ├── common/    # Shared utilities
-│       │   └── types/     # TypeScript types
-│       └── prisma/        # Database schema and migrations
-├── docs/                  # Technical specifications
-└── packages/              # Shared packages (if needed)
-\`\`\`
+│       │   ├── modules/       # Módulos de funcionalidades
+│       │   │   ├── auth/      # Autenticación y autorización
+│       │   │   ├── users/     # Gestión de usuarios
+│       │   │   ├── tickets/   # Gestión de tickets
+│       │   │   ├── categories/# Categorías de tickets
+│       │   │   ├── dashboard/ # Métricas y analytics
+│       │   │   └── sla/       # Cálculo y monitoreo de SLA
+│       │   ├── common/        # Utilidades compartidas
+│       │   │   └── prisma/    # Servicio de Prisma
+│       │   └── main.ts        # Entry point
+│       └── prisma/            # Schema y seeds de base de datos
+│           ├── schema.prisma  # Definición del schema
+│           └── seed.ts        # Datos de ejemplo
+│
+├── docs/                      # Especificaciones técnicas
+│   ├── API-ARCHITECTURE.md    # Arquitectura de la API
+│   ├── DATABASE-SCHEMA.md     # Schema de base de datos
+│   ├── F1-TICKET-INTAKE-SPEC.md
+│   ├── F2-TICKET-LIFECYCLE-SPEC.md
+│   └── F3-SLA-DASHBOARD-SPEC.md
+│
+├── docker-compose.yml         # Configuración de Docker Compose
+├── turbo.json                 # Configuración de Turborepo
+└── package.json               # Dependencias del monorepo
+```
 
-## 🔧 Development Commands
+## 🔧 Comandos de Desarrollo
 
-\`\`\`bash
-# Development
-npm run dev              # Start all apps in development
-npm run build           # Build all apps for production
-npm run lint            # Lint all packages
+### Comandos Principales
 
-# Database
-npm run db:generate     # Generate Prisma client
-npm run db:push         # Push schema changes
-npm run db:seed         # Seed database with sample data
+```bash
+# Desarrollo
+npm run dev              # Iniciar todos los apps en desarrollo
+npm run build           # Build de todos los apps para producción
+npm run lint            # Lint de todos los packages
 
-# Individual apps
-cd apps/frontend && npm run dev
-cd apps/backend && npm run start:dev
-\`\`\`
+# Base de Datos
+npm run db:generate     # Generar cliente de Prisma
+npm run db:push         # Aplicar cambios del schema
+npm run db:seed         # Poblar base de datos con datos de ejemplo
+
+# Apps Individuales
+cd apps/frontend && npm run dev        # Solo frontend
+cd apps/backend && npm run start:dev   # Solo backend
+```
+
+### Comandos de Base de Datos Avanzados
+
+```bash
+# Ver el estado de las migraciones
+cd apps/backend && npx prisma migrate status
+
+# Crear una nueva migración
+cd apps/backend && npx prisma migrate dev --name nombre_migracion
+
+# Resetear la base de datos (¡CUIDADO! Borra todos los datos)
+cd apps/backend && npx prisma migrate reset
+
+# Abrir Prisma Studio (GUI para ver/editar datos)
+cd apps/backend && npx prisma studio
+```
 
 ## 🚀 Deployment
 
 ### Frontend (Vercel)
-1. Connect GitHub repository to Vercel
-2. Set build command: `cd ../.. && npm run build --filter=frontend`
-3. Set environment variables in Vercel dashboard
 
-### Backend (Render/Railway)
-1. Connect GitHub repository
-2. Set build command: `cd apps/backend && npm run build`
-3. Set start command: `cd apps/backend && npm run start:prod`
-4. Configure environment variables
+1. **Conectar repositorio a Vercel**
+   - Ve a [vercel.com](https://vercel.com)
+   - Importa tu repositorio de GitHub
 
-## 📊 Database Schema
+2. **Configurar Build Settings**
+   ```
+   Framework Preset: Next.js
+   Root Directory: apps/frontend
+   Build Command: cd ../.. && npm run build --filter=frontend
+   Output Directory: .next
+   Install Command: npm install
+   ```
 
-See [docs/DATABASE-SCHEMA.md](docs/DATABASE-SCHEMA.md) for complete ERD and schema documentation.
+3. **Variables de Entorno en Vercel**
+   ```env
+   NEXTAUTH_SECRET=tu-secreto-produccion
+   NEXTAUTH_URL=https://tu-dominio.vercel.app
+   NEXT_PUBLIC_API_URL=https://tu-backend-api.com
+   ```
 
-## 📋 API Documentation
+### Backend (AWS / Railway / Render)
 
-API endpoints are documented using OpenAPI/Swagger:
-- Development: http://localhost:3001/api/docs
-- Production: [Your API URL]/api/docs
+**Opción A: AWS ECS (Contenedores)**
+
+1. Crear un repositorio ECR
+2. Push de la imagen Docker
+3. Configurar ECS Task Definition
+4. Configurar Load Balancer
+5. Configurar variables de entorno
+
+**Opción B: Railway**
+
+1. Conectar repositorio de GitHub
+2. Configurar:
+   ```
+   Root Directory: apps/backend
+   Build Command: npm install && npm run build
+   Start Command: npm run start:prod
+   ```
+3. Agregar PostgreSQL addon
+4. Configurar variables de entorno
+
+**Opción C: Render**
+
+1. Conectar repositorio de GitHub
+2. Configurar:
+   ```
+   Root Directory: apps/backend
+   Build Command: npm install && npm run build
+   Start Command: npm run start:prod
+   ```
+3. Agregar PostgreSQL database
+4. Configurar variables de entorno
+
+### Base de Datos (Supabase)
+
+1. **Crear proyecto en Supabase**
+   - Ve a [supabase.com](https://supabase.com)
+   - Crea un nuevo proyecto
+
+2. **Obtener Connection String**
+   - Ve a Project Settings > Database
+   - Copia la Connection String
+
+3. **Aplicar Schema**
+   ```bash
+   # Actualizar DATABASE_URL en .env
+   DATABASE_URL="postgresql://postgres:[PASSWORD]@[HOST]:[PORT]/postgres"
+   
+   # Aplicar schema
+   npm run db:push
+   
+   # Poblar datos iniciales
+   npm run db:seed
+   ```
+
+## 📊 Schema de Base de Datos
+
+Ver [docs/DATABASE-SCHEMA.md](docs/DATABASE-SCHEMA.md) para el ERD completo y documentación del schema.
+
+### Tablas Principales
+
+- **User**: Usuarios del sistema (Requester, Agent, Manager)
+- **Ticket**: Tickets de soporte
+- **Category**: Categorías de tickets con SLA
+- **Comment**: Comentarios en tickets
+- **Attachment**: Archivos adjuntos
+- **AuditLog**: Registro de auditoría
+
+## 📋 Documentación de la API
+
+La API está documentada usando OpenAPI/Swagger:
+
+- **Desarrollo**: http://localhost:3001/api/docs
+- **Producción**: [Tu URL de API]/api/docs
+
+### Endpoints Principales
+
+```
+POST   /auth/login              # Login de usuario
+POST   /auth/register           # Registro de usuario
+GET    /tickets                 # Listar tickets
+POST   /tickets                 # Crear ticket
+GET    /tickets/:id             # Obtener ticket
+PATCH  /tickets/:id             # Actualizar ticket
+POST   /tickets/:id/comments    # Agregar comentario
+GET    /dashboard/metrics       # Métricas del dashboard
+GET    /categories              # Listar categorías
+```
 
 ## 🧪 Testing
 
-\`\`\`bash
+```bash
 # Backend tests
 cd apps/backend
 npm run test              # Unit tests
@@ -175,61 +631,201 @@ npm run test:cov          # Coverage report
 # Frontend tests  
 cd apps/frontend
 npm run test              # Jest + React Testing Library
-\`\`\`
+npm run test:watch        # Watch mode
+```
 
-## 🎨 UI Design System
+## 🎨 Sistema de Diseño
 
-Inspired by **Linear** and **Height** - clean, functional, developer-focused design:
-- Consistent spacing and typography
-- Subtle shadows and borders
-- Muted color palette with accent colors for status
-- Responsive design for all screen sizes
+Inspirado en **Linear** y **Height** - diseño limpio, funcional y enfocado en desarrolladores:
 
-See [docs/UI-STYLE.md](docs/UI-STYLE.md) for complete design documentation.
+- Espaciado y tipografía consistentes
+- Sombras y bordes sutiles
+- Paleta de colores apagados con colores de acento para estados
+- Diseño responsive para todos los tamaños de pantalla
 
-## 🤖 AI Usage
+### Colores de Estado
 
-This project leverages AI tools for development acceleration:
-- Code generation and boilerplate creation
-- Test case generation
-- Documentation writing
-- Schema design validation
+- **Open**: Azul
+- **In Progress**: Amarillo
+- **Resolved**: Verde
+- **Closed**: Gris
 
-See [docs/AI-USAGE.md](docs/AI-USAGE.md) for detailed AI usage documentation.
+### Prioridades
 
-## 🔒 Security Considerations
-
-- JWT-based authentication with secure token storage
-- Role-based access control (RBAC) 
-- Input validation and sanitization
-- SQL injection prevention via Prisma
-- XSS protection with proper escaping
-- CORS configuration for API security
-
-## 📈 Performance Optimizations
-
-- Database indexes for common queries
-- React Query for efficient data fetching
-- Next.js optimizations (SSR, image optimization)
-- Lazy loading for large datasets
-- Optimistic updates for better UX
+- **Low**: Gris
+- **Medium**: Azul
+- **High**: Naranja
+- **Critical**: Rojo
 
 ## 🐛 Troubleshooting
 
-### Common Issues
+### Problemas Comunes
 
-1. **Database Connection**: Verify PostgreSQL is running and DATABASE_URL is correct
-2. **Port Conflicts**: Frontend (3000) and Backend (3001) ports must be available
-3. **Environment Variables**: Ensure all required variables are set in .env files
-4. **Prisma Issues**: Run `npm run db:generate` after schema changes
+#### 1. Error de Conexión a la Base de Datos
 
-### Getting Help
+**Síntoma**: `Error: Can't reach database server`
 
-1. Check the [docs/](docs/) folder for detailed specifications
-2. Review error logs in terminal
-3. Verify environment configuration
-4. Check database connectivity
+**Solución**:
+```bash
+# Verificar que PostgreSQL está corriendo
+# En macOS/Linux:
+pg_isready
 
-## 📄 License
+# En Docker:
+docker ps | grep postgres
 
-This project is for interview/evaluation purposes.
+# Verificar DATABASE_URL en .env
+echo $DATABASE_URL
+```
+
+#### 2. Puerto en Uso
+
+**Síntoma**: `Error: Port 3000 is already in use`
+
+**Solución**:
+```bash
+# Encontrar el proceso usando el puerto
+lsof -i :3000
+
+# Matar el proceso
+kill -9 <PID>
+
+# O usar un puerto diferente
+PORT=3002 npm run dev
+```
+
+#### 3. Prisma Client No Generado
+
+**Síntoma**: `Cannot find module '@prisma/client'`
+
+**Solución**:
+```bash
+# Generar el cliente de Prisma
+npm run db:generate
+
+# Si persiste, reinstalar dependencias
+rm -rf node_modules
+npm install
+```
+
+#### 4. Variables de Entorno No Cargadas
+
+**Síntoma**: `undefined` en variables de entorno
+
+**Solución**:
+```bash
+# Verificar que los archivos .env existen
+ls -la apps/backend/.env
+ls -la apps/frontend/.env.local
+
+# Reiniciar los servidores después de cambiar .env
+# Ctrl+C y luego npm run dev
+```
+
+#### 5. Error de CORS
+
+**Síntoma**: `Access to fetch blocked by CORS policy`
+
+**Solución**:
+- Verificar que `FRONTEND_URL` en backend/.env coincide con la URL del frontend
+- Verificar que `NEXT_PUBLIC_API_URL` en frontend/.env.local apunta al backend correcto
+
+#### 6. Docker Compose No Inicia
+
+**Síntoma**: Servicios no inician o fallan
+
+**Solución**:
+```bash
+# Ver logs detallados
+docker-compose logs
+
+# Reconstruir desde cero
+docker-compose down -v
+docker-compose up --build
+
+# Verificar que los puertos no están en uso
+lsof -i :3000
+lsof -i :3001
+lsof -i :5432
+```
+
+### Obtener Ayuda
+
+1. Revisar la carpeta [docs/](docs/) para especificaciones detalladas
+2. Revisar logs de error en la terminal
+3. Verificar configuración de entorno
+4. Verificar conectividad de base de datos
+5. Abrir un issue en GitHub con:
+   - Descripción del problema
+   - Pasos para reproducir
+   - Logs de error
+   - Versión de Node.js y npm
+
+## 📝 Notas de Desarrollo
+
+### Convenciones de Código
+
+- **TypeScript**: Strict mode habilitado
+- **Naming**: camelCase para variables, PascalCase para componentes
+- **Imports**: Usar imports absolutos cuando sea posible
+- **Comments**: Comentar lógica compleja, no código obvio
+
+### Git Workflow
+
+```bash
+# Crear una rama para tu feature
+git checkout -b feature/nombre-feature
+
+# Hacer commits descriptivos
+git commit -m "feat: agregar filtro de tickets por prioridad"
+
+# Push y crear PR
+git push origin feature/nombre-feature
+```
+
+### Estructura de Commits
+
+Seguir [Conventional Commits](https://www.conventionalcommits.org/):
+
+- `feat:` Nueva funcionalidad
+- `fix:` Corrección de bug
+- `docs:` Cambios en documentación
+- `style:` Cambios de formato (no afectan código)
+- `refactor:` Refactorización de código
+- `test:` Agregar o modificar tests
+- `chore:` Tareas de mantenimiento
+
+## 🔒 Consideraciones de Seguridad
+
+- Autenticación basada en JWT con almacenamiento seguro de tokens
+- Control de acceso basado en roles (RBAC)
+- Validación y sanitización de inputs
+- Prevención de SQL injection vía Prisma
+- Protección XSS con escapado apropiado
+- Configuración CORS para seguridad de API
+- Variables de entorno para secretos (nunca en código)
+
+## 📈 Optimizaciones de Performance
+
+- Índices de base de datos para queries comunes
+- React Query para fetching eficiente de datos
+- Optimizaciones de Next.js (SSR, optimización de imágenes)
+- Lazy loading para datasets grandes
+- Actualizaciones optimistas para mejor UX
+- Caching de respuestas de API
+
+## 📄 Licencia
+
+Este proyecto es para propósitos de evaluación/entrevista.
+
+## 🤝 Contribuir
+
+1. Fork el proyecto
+2. Crea tu feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit tus cambios (`git commit -m 'feat: Add some AmazingFeature'`)
+4. Push a la branch (`git push origin feature/AmazingFeature`)
+5. Abre un Pull Request
+
+---
+
+**¿Necesitas ayuda?** Revisa la carpeta `docs/` o abre un issue en GitHub.

@@ -21,7 +21,7 @@ Provide real-time SLA monitoring, alerting system, and executive dashboard for s
 - Cons: More complex update logic
 
 #### SLA Status Logic
-\`\`\`typescript
+```typescript
 enum SLAStatus {
   ON_TIME = 'ON_TIME',           // > 25% time remaining
   AT_RISK = 'AT_RISK',           // 0-25% time remaining
@@ -36,7 +36,7 @@ function calculateSLAStatus(dueDate: Date, now: Date, createdAt: Date): SLAStatu
   if (remainingTime / totalTime < 0.25) return SLAStatus.AT_RISK;
   return SLAStatus.ON_TIME;
 }
-\`\`\`
+```
 
 ### Dashboard KPIs
 
@@ -49,7 +49,7 @@ function calculateSLAStatus(dueDate: Date, now: Date, createdAt: Date): SLAStatu
 6. **Agent Performance**: Individual SLA compliance rates
 
 #### API Contract
-\`\`\`typescript
+```typescript
 // GET /api/dashboard/metrics
 Response: {
   period: '7d' | '30d';
@@ -78,7 +78,7 @@ Response: {
     };
   };
 }
-\`\`\`
+```
 
 ### Alert System
 
@@ -96,7 +96,7 @@ Response: {
 ### Real-time Updates
 
 #### WebSocket Events
-\`\`\`typescript
+```typescript
 interface SLAUpdateEvent {
   type: 'SLA_STATUS_CHANGED';
   ticketId: string;
@@ -109,7 +109,7 @@ interface MetricsUpdateEvent {
   type: 'METRICS_UPDATED';
   metrics: DashboardMetrics;
 }
-\`\`\`
+```
 
 ## Implementation Plan
 
@@ -134,7 +134,7 @@ interface MetricsUpdateEvent {
 ### Database Optimization
 
 #### Indexes
-\`\`\`sql
+```sql
 -- SLA queries
 CREATE INDEX idx_tickets_sla_status ON tickets(sla_status, first_response_due);
 CREATE INDEX idx_tickets_resolution_due ON tickets(resolution_due, status);
@@ -143,10 +143,10 @@ CREATE INDEX idx_tickets_resolution_due ON tickets(resolution_due, status);
 CREATE INDEX idx_tickets_created_at ON tickets(created_at);
 CREATE INDEX idx_tickets_status_created ON tickets(status, created_at);
 CREATE INDEX idx_tickets_agent_status ON tickets(agent_id, status);
-\`\`\`
+```
 
 #### Materialized Views (Optional)
-\`\`\`sql
+```sql
 CREATE MATERIALIZED VIEW daily_metrics AS
 SELECT 
   DATE(created_at) as date,
@@ -155,7 +155,7 @@ SELECT
   COUNT(CASE WHEN sla_status = 'BREACHED' THEN 1 END) as breached_count
 FROM tickets
 GROUP BY DATE(created_at);
-\`\`\`
+```
 
 ## Testing Strategy
 

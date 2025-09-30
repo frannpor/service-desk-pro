@@ -22,7 +22,7 @@ As a **Manager**, I want to configure categories with custom fields and SLA para
 ### Data Model
 
 #### Category Entity
-\`\`\`typescript
+```typescript
 interface Category {
   id: string;
   name: string;
@@ -46,10 +46,10 @@ interface CustomField {
     pattern?: string;
   };
 }
-\`\`\`
+```
 
 #### Ticket Entity
-\`\`\`typescript
+```typescript
 interface Ticket {
   id: string;
   title: string;
@@ -63,19 +63,19 @@ interface Ticket {
   firstResponseDue: Date;
   resolutionDue: Date;
 }
-\`\`\`
+```
 
 ### API Contracts
 
 #### GET /api/categories
-\`\`\`typescript
+```typescript
 Response: {
   categories: Category[];
 }
-\`\`\`
+```
 
 #### POST /api/tickets
-\`\`\`typescript
+```typescript
 Request: {
   title: string;
   description: string;
@@ -86,10 +86,10 @@ Request: {
 Response: {
   ticket: Ticket;
 }
-\`\`\`
+```
 
 #### POST /api/categories (Manager only)
-\`\`\`typescript
+```typescript
 Request: {
   name: string;
   description?: string;
@@ -97,7 +97,7 @@ Request: {
   resolutionSLA: number;
   customFields: CustomField[];
 }
-\`\`\`
+```
 
 ### UI Components
 

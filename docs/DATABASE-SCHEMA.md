@@ -2,7 +2,7 @@
 
 ## Entity Relationship Diagram
 
-\`\`\`mermaid
+```mermaid
 erDiagram
     User {
         string id PK
@@ -74,7 +74,7 @@ erDiagram
     
     Ticket ||--o{ Comment : "has comments"
     Ticket ||--o{ AuditLog : "has audit trail"
-\`\`\`
+```
 
 ## Enums
 
@@ -135,7 +135,7 @@ erDiagram
 
 ## Indexes for Performance
 
-\`\`\`sql
+```sql
 -- User lookups
 CREATE INDEX idx_users_email ON users(email);
 CREATE INDEX idx_users_role ON users(role);
@@ -164,7 +164,7 @@ CREATE INDEX idx_comments_author ON comments(author_id);
 CREATE INDEX idx_audit_logs_ticket ON audit_logs(ticket_id);
 CREATE INDEX idx_audit_logs_user ON audit_logs(user_id);
 CREATE INDEX idx_audit_logs_created ON audit_logs(created_at);
-\`\`\`
+```
 
 ## Data Integrity Rules
 
