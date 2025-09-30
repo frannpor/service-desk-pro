@@ -1,0 +1,162 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  REQUESTER
+  AGENT
+  MANAGER
+}
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  WAITING_FOR_CUSTOMER
+  WAITING_FOR_AGENT
+  RESOLVED
+  CLOSED
+}
+
+enum TicketPriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum SLAStatus {
+  ON_TIME
+  AT_RISK
+  BREACHED
+}
+
+enum AuditAction {
+  CREATED
+  UPDATED
+  STATUS_CHANGED
+  ASSIGNED
+  COMMENTED
+  RESOLVED
+  CLOSED
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  password  String
+  role      UserRole @default(REQUESTER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  createdTickets Ticket[] @relation("TicketRequester")
+  assignedTickets Ticket[] @relation("TicketAgent")
+  comments       Comment[]
+  auditLogs      AuditLog[]
+
+  @@map("users")
+}
+
+model Category {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  isActive    Boolean  @default(true)
+  
+  // SLA Configuration (in minutes)
+  firstResponseSLA Int // minutes for first response
+  resolutionSLA    Int // minutes for resolution
+  
+  // Dynamic fields configuration (JSON)
+  customFields Json @default("[]")
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  tickets Ticket[]
+
+  @@map("categories")
+}
+
+model Ticket {
+  id          String        @id @default(cuid())
+  title       String
+  description String
+  status      TicketStatus  @default(OPEN)
+  priority    TicketPriority @default(MEDIUM)
+  
+  // Custom field values (JSON)
+  customFieldValues Json @default("{}")
+  
+  // SLA tracking
+  slaStatus           SLAStatus @default(ON_TIME)
+  firstResponseDue    DateTime?
+  resolutionDue       DateTime?
+  firstResponseAt     DateTime?
+  resolvedAt          DateTime?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  requesterId String
+  requester   User     @relation("TicketRequester", fields: [requesterId], references: [id])
+  
+  agentId String?
+  agent   User?   @relation("TicketAgent", fields: [agentId], references: [id])
+  
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id])
+  
+  comments  Comment[]
+  auditLogs AuditLog[]
+
+  @@map("tickets")
+}
+
+model Comment {
+  id      String @id @default(cuid())
+  content String
+  isInternal Boolean @default(false) // Internal comments only visible to agents/managers
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  ticketId String
+  ticket   Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  
+  authorId String
+  author   User   @relation(fields: [authorId], references: [id])
+
+  @@map("comments")
+}
+
+model AuditLog {
+  id          String      @id @default(cuid())
+  action      AuditAction
+  description String
+  oldValue    Json?
+  newValue    Json?
+  
+  createdAt DateTime @default(now())
+
+  // Relations
+  ticketId String
+  ticket   Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  @@map("audit_logs")
+}
