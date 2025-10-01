@@ -18,6 +18,7 @@ import { loginSchema, type LoginFormData} from "@/src/lib/schemas/auth.schema"
 export default function SignIn() {
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [isRedirecting, setIsRedirecting] = useState(false)
   const [globalError, setGlobalError] = useState("")
   const router = useRouter()
 
@@ -63,22 +64,30 @@ export default function SignIn() {
         } else {
           setGlobalError(result.error)
         }
+        setIsLoading(false)
         return
       }
 
       const session = await getSession()
       if (!session?.user) {
         setGlobalError("Failed to establish session. Please try again.")
+        setIsLoading(false)
         return
       }
 
+      // Activar estado de redirección
+      setIsRedirecting(true)
+
       const redirectPath = getRedirectPath(session.user.role)
+      
+      // Pequeño delay para asegurar que el estado se actualice visualmente
+      await new Promise(resolve => setTimeout(resolve, 100))
+      
       router.push(redirectPath)
 
     } catch (error) {
       console.error("Login error:", error)
       setGlobalError("An unexpected error occurred. Please try again.")
-    } finally {
       setIsLoading(false)
     }
   }
@@ -116,6 +125,21 @@ export default function SignIn() {
     }
 
     setFocus("password")
+  }
+
+  // Overlay de redirección de pantalla completa
+  if (isRedirecting) {
+    return (
+      <div className="fixed inset-0 bg-white z-50 flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <Loader2 className="h-12 w-12 animate-spin text-blue-600 mx-auto" />
+          <div className="space-y-2">
+            <h2 className="text-xl font-semibold text-gray-900">Welcome back!</h2>
+            <p className="text-sm text-gray-500">Redirecting to your dashboard...</p>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -163,6 +187,7 @@ export default function SignIn() {
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
                   tabIndex={-1}
+                  disabled={isLoading}
                 >
                   {showPassword ? (
                     <EyeOff className="h-4 w-4" />
@@ -205,7 +230,8 @@ export default function SignIn() {
               <button
                 type="button"
                 onClick={() => quickFillDemoAccount("admin@company.com", "password123")}
-                className="w-full text-left p-2 rounded hover:bg-gray-100 transition-colors"
+                className="w-full text-left p-2 rounded hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={isLoading}
               >
                 <span className="font-semibold text-gray-600">Manager:</span>
                 <span className="text-gray-500 ml-1">admin@company.com / password123</span>
@@ -213,7 +239,8 @@ export default function SignIn() {
               <button
                 type="button"
                 onClick={() => quickFillDemoAccount("agent1@company.com", "password123")}
-                className="w-full text-left p-2 rounded hover:bg-gray-100 transition-colors"
+                className="w-full text-left p-2 rounded hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={isLoading}
               >
                 <span className="font-semibold text-gray-600">Agent:</span>
                 <span className="text-gray-500 ml-1">agent1@company.com / password123</span>
@@ -221,7 +248,8 @@ export default function SignIn() {
               <button
                 type="button"
                 onClick={() => quickFillDemoAccount("user1@company.com", "password123")}
-                className="w-full text-left p-2 rounded hover:bg-gray-100 transition-colors"
+                className="w-full text-left p-2 rounded hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={isLoading}
               >
                 <span className="font-semibold text-gray-600">Requester:</span>
                 <span className="text-gray-500 ml-1">user1@company.com / password123</span>
