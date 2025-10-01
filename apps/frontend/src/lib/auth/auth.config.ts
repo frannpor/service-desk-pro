@@ -2,11 +2,7 @@ import type { NextAuthConfig } from "next-auth";
 import CredentialsProvider from "@auth/core/providers/credentials";
 import { z } from "zod";
 import { API_ENDPOINTS } from "../constants/api";
-import { Adapter } from "@auth/core/adapters";
-import { PrismaAdapter } from "@auth/prisma-adapter"
-import { prisma } from "./prisma";
 import { User } from "next-auth";
-import { UserRole } from "@/src/types";
 
 const loginSchema = z.object({
   email: z.email(),
@@ -14,7 +10,6 @@ const loginSchema = z.object({
 });
 
 export const authConfig: NextAuthConfig = {
-  adapter: PrismaAdapter(prisma) as Adapter,
   session: { strategy: "jwt" },
   pages: {
     signIn: '/auth/signin',
