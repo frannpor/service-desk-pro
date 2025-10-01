@@ -7,21 +7,11 @@ import { Prisma } from "@prisma/client"
 export class CategoriesService {
   constructor(private prisma: PrismaService) { }
 
-  async create(createCategoryDto: CreateCategoryDto) { 
+  async create(createCategoryDto: CreateCategoryDto) {
     const data: Prisma.CategoryCreateInput = {
       ...createCategoryDto,
-      customFields: createCategoryDto.customFields ? JSON.stringify(createCategoryDto.customFields) : undefined,
+      customFields: createCategoryDto.customFields as unknown as Prisma.InputJsonValue,
     }
-    return this.prisma.category.create({ data })
-  }
-
-  private processCustomFields(customFields?: CustomFieldDto[]): Prisma.InputJsonValue | undefined {
-    if (customFields) {
-      return JSON.stringify(customFields)
-    }
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
-    // TODO: Fix this type issue
     return this.prisma.category.create({ data })
   }
 
@@ -45,13 +35,19 @@ export class CategoriesService {
   }
 
   async update(id: string, updateCategoryDto: UpdateCategoryDto) {
-    const category = await this.findOne(id)
+    await this.findOne(id) // Verificar que existe
 
-    const customFields = this.processCustomFields(updateCategoryDto.customFields)
+    const data: Prisma.CategoryUpdateInput = {
+      ...updateCategoryDto,
+      // Si hay customFields, castea el tipo; si no, undefined
+      customFields: updateCategoryDto.customFields 
+        ? (updateCategoryDto.customFields as unknown as Prisma.InputJsonValue)
+        : undefined,
+    }
 
     return this.prisma.category.update({
       where: { id },
-      data: { ...updateCategoryDto, customFields },
+      data,
     })
   }
 

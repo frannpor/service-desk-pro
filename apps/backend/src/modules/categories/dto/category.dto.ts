@@ -11,9 +11,9 @@ export class CustomFieldDto {
   @IsString()
   name: string
 
-  @ApiProperty({ enum: ["text", "textarea", "select", "multiselect", "number", "date"] })
+  @ApiProperty({ enum: ["text", "textarea", "select", "multiselect", "number", "date", "checkbox"] })
   @IsString()
-  type: "text" | "textarea" | "select" | "multiselect" | "number" | "date"
+  type: "text" | "textarea" | "select" | "multiselect" | "number" | "date" | "checkbox"
 
   @ApiProperty()
   @IsBoolean()

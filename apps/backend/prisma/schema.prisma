@@ -54,33 +54,33 @@ model User {
   name      String
   password  String
   role      UserRole @default(REQUESTER)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relations
-  createdTickets Ticket[] @relation("TicketRequester")
-  assignedTickets Ticket[] @relation("TicketAgent")
-  comments       Comment[]
-  auditLogs      AuditLog[]
+  createdTickets  Ticket[]   @relation("TicketRequester")
+  assignedTickets Ticket[]   @relation("TicketAgent")
+  comments        Comment[]
+  auditLogs       AuditLog[]
 
   @@map("users")
 }
 
 model Category {
-  id          String   @id @default(cuid())
-  name        String   @unique
+  id          String  @id @default(cuid())
+  name        String  @unique
   description String?
-  isActive    Boolean  @default(true)
+  isActive    Boolean @default(true) @map("is_active")
   
   // SLA Configuration (in minutes)
-  firstResponseSLA Int // minutes for first response
-  resolutionSLA    Int // minutes for resolution
+  firstResponseSLA Int @map("first_response_sla")
+  resolutionSLA    Int @map("resolution_sla")
   
   // Dynamic fields configuration (JSON)
-  customFields Json @default("[]")
+  customFields Json @default("[]") @map("custom_fields")
   
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relations
   tickets Ticket[]
@@ -89,33 +89,33 @@ model Category {
 }
 
 model Ticket {
-  id          String        @id @default(cuid())
+  id          String         @id @default(cuid())
   title       String
   description String
-  status      TicketStatus  @default(OPEN)
+  status      TicketStatus   @default(OPEN)
   priority    TicketPriority @default(MEDIUM)
   
   // Custom field values (JSON)
-  customFieldValues Json @default("{}")
+  customFieldValues Json @default("{}") @map("custom_field_values")
   
   // SLA tracking
-  slaStatus           SLAStatus @default(ON_TIME)
-  firstResponseDue    DateTime?
-  resolutionDue       DateTime?
-  firstResponseAt     DateTime?
-  resolvedAt          DateTime?
+  slaStatus        SLAStatus @default(ON_TIME) @map("sla_status")
+  firstResponseDue DateTime? @map("first_response_due")
+  resolutionDue    DateTime? @map("resolution_due")
+  firstResponseAt  DateTime? @map("first_response_at")
+  resolvedAt       DateTime? @map("resolved_at")
   
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relations
-  requesterId String
-  requester   User     @relation("TicketRequester", fields: [requesterId], references: [id])
+  requesterId String @map("requester_id")
+  requester   User   @relation("TicketRequester", fields: [requesterId], references: [id])
   
-  agentId String?
+  agentId String? @map("agent_id")
   agent   User?   @relation("TicketAgent", fields: [agentId], references: [id])
   
-  categoryId String
+  categoryId String   @map("category_id")
   category   Category @relation(fields: [categoryId], references: [id])
   
   comments  Comment[]
@@ -125,18 +125,18 @@ model Ticket {
 }
 
 model Comment {
-  id      String @id @default(cuid())
-  content String
-  isInternal Boolean @default(false) // Internal comments only visible to agents/managers
+  id         String  @id @default(cuid())
+  content    String
+  isInternal Boolean @default(false) @map("is_internal")
   
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relations
-  ticketId String
+  ticketId String @map("ticket_id")
   ticket   Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
   
-  authorId String
+  authorId String @map("author_id")
   author   User   @relation(fields: [authorId], references: [id])
 
   @@map("comments")
@@ -146,16 +146,16 @@ model AuditLog {
   id          String      @id @default(cuid())
   action      AuditAction
   description String
-  oldValue    Json?
-  newValue    Json?
+  oldValue    Json?       @map("old_value")
+  newValue    Json?       @map("new_value")
   
-  createdAt DateTime @default(now())
+  createdAt DateTime @default(now()) @map("created_at")
 
   // Relations
-  ticketId String
+  ticketId String @map("ticket_id")
   ticket   Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
   
-  userId String
+  userId String @map("user_id")
   user   User   @relation(fields: [userId], references: [id])
 
   @@map("audit_logs")

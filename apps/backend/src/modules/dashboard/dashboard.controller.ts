@@ -1,5 +1,5 @@
-import { Controller, Get, UseGuards } from "@nestjs/common"
-import { ApiTags, ApiBearerAuth, ApiOperation } from "@nestjs/swagger"
+import { Controller, Get, Query, UseGuards } from "@nestjs/common"
+import { ApiTags, ApiBearerAuth, ApiOperation, ApiQuery } from "@nestjs/swagger"
 import { DashboardService } from "./dashboard.service"
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard"
 import { RolesGuard } from "../auth/guards/roles.guard"
@@ -16,13 +16,15 @@ export class DashboardController {
 
   @Get("metrics")
   @ApiOperation({ summary: "Get dashboard metrics and SLA alerts" })
-  getMetrics(period?: "7d" | "30d") {
+  @ApiQuery({ name: "period", required: false, enum: ["7d", "30d"] })
+  getMetrics(@Query("period") period?: "7d" | "30d") {
     return this.dashboardService.getMetrics(period)
   }
 
   @Get("trends")
   @ApiOperation({ summary: "Get ticket creation and resolution trends" })
-  getTicketTrends(days?: string) {
+  @ApiQuery({ name: "days", required: false, type: Number })
+  getTicketTrends(@Query("days") days?: string) {
     const daysNum = days ? Number.parseInt(days, 10) : 30
     return this.dashboardService.getTicketTrends(daysNum)
   }

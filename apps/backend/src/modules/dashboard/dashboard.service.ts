@@ -30,20 +30,6 @@ export class DashboardService {
       where: { createdAt: { gte: periodStart } },
     })
 
-    const firstResponseCompliance = await this.prisma.ticket.count({
-      where: {
-        createdAt: { gte: periodStart },
-        AND: [{ firstResponseAt: { not: null } }, { firstResponseAt: { lte: this.prisma.ticket.fields.firstResponseDue } }],
-      },
-    })
-
-    const resolutionCompliance = await this.prisma.ticket.count({
-      where: {
-        createdAt: { gte: periodStart },
-        AND: [{ resolvedAt: { not: null } }, { resolvedAt: { lte: this.prisma.ticket.fields.resolutionDue } }],
-      },
-    })
-
     const resolvedTickets = await this.prisma.ticket.count({
       where: {
         createdAt: { gte: periodStart },
@@ -51,25 +37,29 @@ export class DashboardService {
       },
     })
 
-    // Average response and resolution times
-    // const avgTimes = await this.prisma.ticket.aggregate({
-    //   where: {
-    //     createdAt: { gte: periodStart },
-    //     firstResponseAt: { not: null },
-    //   },
-    //   _avg: {
-    //     // We'll calculate this in raw SQL for better performance
-    //   },
-    // })
+    const firstResponseSLA = await this.prisma.$queryRaw<[{ compliant: bigint }]>`
+      SELECT COUNT(*) as compliant
+      FROM tickets 
+      WHERE created_at >= ${periodStart} 
+        AND first_response_at IS NOT NULL 
+        AND first_response_at <= first_response_due
+    `
 
-    // Get average times with raw SQL for better calculation
-    const avgResponseTime = await this.prisma.$queryRaw<[{ avg_minutes: number }]>`
+    const resolutionSLA = await this.prisma.$queryRaw<[{ compliant: bigint }]>`
+      SELECT COUNT(*) as compliant
+      FROM tickets 
+      WHERE created_at >= ${periodStart} 
+        AND resolved_at IS NOT NULL 
+        AND resolved_at <= resolution_due
+    `
+
+    const avgResponseTime = await this.prisma.$queryRaw<[{ avg_minutes: number | null }]>`
       SELECT AVG(EXTRACT(EPOCH FROM (first_response_at - created_at))/60) as avg_minutes
       FROM tickets 
       WHERE created_at >= ${periodStart} AND first_response_at IS NOT NULL
     `
 
-    const avgResolutionTime = await this.prisma.$queryRaw<[{ avg_minutes: number }]>`
+    const avgResolutionTime = await this.prisma.$queryRaw<[{ avg_minutes: number | null }]>`
       SELECT AVG(EXTRACT(EPOCH FROM (resolved_at - created_at))/60) as avg_minutes
       FROM tickets 
       WHERE created_at >= ${periodStart} AND resolved_at IS NOT NULL
@@ -84,7 +74,7 @@ export class DashboardService {
       _count: true,
     })
 
-    const backlogByAge = await this.prisma.$queryRaw<Array<{ age_group: string; count: number }>>`
+    const backlogByAge = await this.prisma.$queryRaw<Array<{ age_group: string; count: bigint }>>`
       SELECT 
         CASE 
           WHEN created_at >= NOW() - INTERVAL '1 day' THEN '0-1d'
@@ -136,8 +126,10 @@ export class DashboardService {
           change: Math.round(volumeChange * 100) / 100,
         },
         slaCompliance: {
-          firstResponse: totalTickets > 0 ? Math.round((firstResponseCompliance / totalTickets) * 100) : 0,
-          resolution: resolvedTickets > 0 ? Math.round((resolutionCompliance / resolvedTickets) * 100) : 0,
+          firstResponse:
+            totalTickets > 0 ? Math.round((Number(firstResponseSLA[0]?.compliant || 0) / totalTickets) * 100) : 0,
+          resolution:
+            resolvedTickets > 0 ? Math.round((Number(resolutionSLA[0]?.compliant || 0) / resolvedTickets) * 100) : 0,
         },
         averageTimes: {
           firstResponse: Math.round((avgResponseTime[0]?.avg_minutes || 0) * 100) / 100,
@@ -162,7 +154,7 @@ export class DashboardService {
   }
 
   async getTicketTrends(days = 30) {
-    const trends = await this.prisma.$queryRaw<Array<{ date: string; created: number; resolved: number }>>`
+    const trends = await this.prisma.$queryRaw<Array<{ date: Date; created: bigint; resolved: bigint }>>`
       SELECT 
         DATE(created_at) as date,
         COUNT(*) as created,
@@ -174,7 +166,7 @@ export class DashboardService {
     `
 
     return trends.map((trend) => ({
-      date: trend.date,
+      date: trend.date.toISOString().split("T")[0],
       created: Number(trend.created),
       resolved: Number(trend.resolved),
     }))
@@ -184,9 +176,6 @@ export class DashboardService {
     const categoryStats = await this.prisma.ticket.groupBy({
       by: ["categoryId"],
       _count: true,
-      // _avg: {
-      //   // We'll use raw SQL for better time calculations
-      // },
     })
 
     const categoryDetails = await this.prisma.category.findMany({
@@ -213,10 +202,10 @@ export class DashboardService {
       Array<{
         agent_id: string
         agent_name: string
-        assigned_tickets: number
-        resolved_tickets: number
-        avg_resolution_time: number
-        sla_compliance: number
+        assigned_tickets: bigint
+        resolved_tickets: bigint
+        avg_resolution_time: number | null
+        sla_compliance: number | null
       }>
     >`
       SELECT 

@@ -27,7 +27,7 @@ export class SLAService {
       },
     })
 
-    const updates = [] as  { id: string; slaStatus: SLAStatus }[]
+    const updates = [] as { id: string; slaStatus: SLAStatus }[]
 
     for (const ticket of tickets) {
       const newSLAStatus = this.calculateSLAStatus(ticket, now)
@@ -69,10 +69,7 @@ export class SLAService {
   ): SLAStatus {
     // If ticket is resolved, check if it was resolved on time
     if (ticket.resolvedAt) {
-      // If resolutionDue is null, it means no SLA is defined, so it's always on time
-      return ticket.resolutionDue && ticket.resolvedAt > ticket.resolutionDue
-        ? SLAStatus.BREACHED
-        : SLAStatus.ON_TIME
+      return ticket.resolutionDue && ticket.resolvedAt > ticket.resolutionDue ? SLAStatus.BREACHED : SLAStatus.ON_TIME
     }
 
     // Check first response SLA if not yet responded
@@ -96,12 +93,13 @@ export class SLAService {
       if (now > ticket.resolutionDue) {
         return SLAStatus.BREACHED
       }
-    }
-    const totalResolutionTime = (ticket.resolutionDue?.getTime() || 0) - ticket.createdAt.getTime()
-    const remainingResolutionTime = (ticket.resolutionDue?.getTime() || 0) - now.getTime()
 
-    if (remainingResolutionTime / totalResolutionTime < 0.25) {
-      return SLAStatus.AT_RISK
+      const totalResolutionTime = ticket.resolutionDue.getTime() - ticket.createdAt.getTime()
+      const remainingResolutionTime = ticket.resolutionDue.getTime() - now.getTime()
+
+      if (remainingResolutionTime / totalResolutionTime < 0.25) {
+        return SLAStatus.AT_RISK
+      }
     }
 
     return SLAStatus.ON_TIME
