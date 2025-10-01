@@ -16,8 +16,7 @@ import { Switch } from "@/src/components/ui/Switch"
 import { Checkbox } from "../ui/Checkbox"
 import { Alert, AlertDescription } from "@/src/components/ui/Alert"
 import { Loader2, AlertCircle, Send } from "lucide-react"
-import { TicketPriority } from "@prisma/client"
-import type { TicketPriority as TicketPriorityType } from "@/src/lib/types/ticket"
+import { TicketPriority, type TicketPriority as TicketPriorityType } from "@/src/lib/types/ticket"
 
 interface CustomField {
   id: string
