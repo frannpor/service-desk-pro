@@ -1,5 +1,5 @@
 import type { NextAuthConfig } from "next-auth";
-import CredentialsProvider from "@auth/core/providers/credentials";
+import Credentials from "@auth/core/providers/credentials";
 import { z } from "zod";
 import { API_ENDPOINTS } from "../constants/api";
 import { User } from "next-auth";
@@ -62,7 +62,7 @@ export const authConfig: NextAuthConfig = {
   // adapter: PostgresAdapter(pool),
   debug: process.env.NODE_ENV === "development",
   providers: [
-    CredentialsProvider({
+    Credentials({
       id: "credentials",
       name: "Credentials",
       credentials: {
