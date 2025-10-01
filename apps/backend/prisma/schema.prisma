@@ -2,12 +2,14 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "rhel-openssl-1.0.x"]
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 enum UserRole {
@@ -71,14 +73,14 @@ model Category {
   name        String  @unique
   description String?
   isActive    Boolean @default(true) @map("is_active")
-  
+
   // SLA Configuration (in minutes)
   firstResponseSLA Int @map("first_response_sla")
   resolutionSLA    Int @map("resolution_sla")
-  
+
   // Dynamic fields configuration (JSON)
   customFields Json @default("[]") @map("custom_fields")
-  
+
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
@@ -94,30 +96,30 @@ model Ticket {
   description String
   status      TicketStatus   @default(OPEN)
   priority    TicketPriority @default(MEDIUM)
-  
+
   // Custom field values (JSON)
   customFieldValues Json @default("{}") @map("custom_field_values")
-  
+
   // SLA tracking
   slaStatus        SLAStatus @default(ON_TIME) @map("sla_status")
   firstResponseDue DateTime? @map("first_response_due")
   resolutionDue    DateTime? @map("resolution_due")
   firstResponseAt  DateTime? @map("first_response_at")
   resolvedAt       DateTime? @map("resolved_at")
-  
+
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relations
   requesterId String @map("requester_id")
   requester   User   @relation("TicketRequester", fields: [requesterId], references: [id])
-  
+
   agentId String? @map("agent_id")
   agent   User?   @relation("TicketAgent", fields: [agentId], references: [id])
-  
+
   categoryId String   @map("category_id")
   category   Category @relation(fields: [categoryId], references: [id])
-  
+
   comments  Comment[]
   auditLogs AuditLog[]
 
@@ -128,14 +130,14 @@ model Comment {
   id         String  @id @default(cuid())
   content    String
   isInternal Boolean @default(false) @map("is_internal")
-  
+
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relations
   ticketId String @map("ticket_id")
   ticket   Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
-  
+
   authorId String @map("author_id")
   author   User   @relation(fields: [authorId], references: [id])
 
@@ -148,13 +150,13 @@ model AuditLog {
   description String
   oldValue    Json?       @map("old_value")
   newValue    Json?       @map("new_value")
-  
+
   createdAt DateTime @default(now()) @map("created_at")
 
   // Relations
   ticketId String @map("ticket_id")
   ticket   Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
-  
+
   userId String @map("user_id")
   user   User   @relation(fields: [userId], references: [id])
 

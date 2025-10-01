@@ -36,20 +36,11 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
   }
 
   async onModuleInit() {
-    this.pool = new Pool({
-      connectionString: process.env.DATABASE_URL,
-    });
-    this.pool.on('connect', () =>
-      this.logger.log('🔗 Database pool connected'),
-    );
-    this.pool.on('error', (err) => {
-      this.logger.error('❌ Unexpected error on idle client', err);
-      process.exit(-1);
-    });
-
+    // Conectar Prisma
     await this.$connect();
     this.logger.log('🔗 Prisma Database connected');
 
+    // Crear pool de PostgreSQL
     this.pool = new Pool({
       connectionString: process.env.DATABASE_URL,
     });
