@@ -1,6 +1,6 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { Inter, Poppins } from "next/font/google"
+import { Poppins } from "next/font/google"
 import "./globals.css"
 import { SessionProvider } from "next-auth/react"
 import { auth } from "@/src/lib/auth/auth"
